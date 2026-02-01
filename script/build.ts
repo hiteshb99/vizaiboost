@@ -1,5 +1,5 @@
 import { build as viteBuild } from "vite";
-import fs from "fs-extra";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -12,16 +12,13 @@ async function build() {
         // 1. Clean dist directory
         const distPath = path.resolve(__dirname, "../dist");
         if (fs.existsSync(distPath)) {
-            fs.removeSync(distPath);
+            console.log("🧹 Cleaning dist directory...");
+            fs.rmSync(distPath, { recursive: true, force: true });
         }
 
         // 2. Build Frontend
         console.log("📦 Building frontend with Vite...");
         await viteBuild();
-
-        // 3. Prepare server for production (optional, could just use tsx)
-        // For now, we rely on the server running with tsx or index.ts directly 
-        // but we ensure the public folder exists in dist.
 
         console.log("✅ Build complete!");
     } catch (error) {
