@@ -7,6 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function build() {
     try {
+        console.log("🚀 CLEAN BUILD STARTING (WITHOUT FS-EXTRA)...");
         console.log("🚀 Starting build process...");
 
         // 1. Clean dist directory
