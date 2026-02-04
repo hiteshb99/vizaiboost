@@ -3,6 +3,8 @@ import { stripe, getBaseUrl } from "../services/stripe";
 import { storage } from "../storage";
 import { z } from "zod";
 
+import { isAuthenticated } from "../auth";
+
 const router = express.Router();
 
 // Validation schemas
@@ -15,9 +17,9 @@ const checkoutSchema = z.object({
  * create-checkout-session
  * Handles one-time purchase intent
  */
-router.post("/checkout", async (req, res) => {
+router.post("/checkout", isAuthenticated, async (req, res) => {
     try {
-        const userId = (req as any).user?.claims?.sub || null; // Matches Replit Auth
+        const userId = (req.user as any)?.id || null;
 
         // Parse body
         const body = checkoutSchema.parse(req.body);
@@ -36,6 +38,10 @@ router.post("/checkout", async (req, res) => {
             stripeSessionId: null
         });
 
+        // Determine Stripe Mode
+        const isSubscription = body.productId.includes('subscription');
+        const mode = isSubscription ? "subscription" : "payment";
+
         // Create Stripe Session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
@@ -47,10 +53,15 @@ router.post("/checkout", async (req, res) => {
                         description: product.description || undefined,
                     },
                     unit_amount: product.priceCents,
+                    ...(isSubscription && {
+                        recurring: {
+                            interval: "month",
+                        },
+                    }),
                 },
                 quantity: 1,
             }],
-            mode: "payment",
+            mode: mode,
             success_url: `${getBaseUrl()}/checkout/result?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${getBaseUrl()}/pricing`,
             client_reference_id: order.id.toString(),
@@ -74,6 +85,38 @@ router.post("/checkout", async (req, res) => {
             return res.status(400).json({ error: error.errors });
         }
         res.status(500).json({ error: error.message || "Checkout initialization failed" });
+    }
+});
+
+/**
+ * Get session details
+ * Retrieves order information for a completed checkout session
+ */
+router.get("/session/:sessionId", async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+
+        // Retrieve the session from Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+        if (!session) {
+            return res.status(404).json({ error: "Session not found" });
+        }
+
+        // Get the order from database using the session ID
+        const order = await storage.getOrderByStripeSession(sessionId);
+
+        res.json({
+            session: {
+                id: session.id,
+                status: session.status,
+                payment_status: session.payment_status,
+            },
+            order: order || null
+        });
+    } catch (error) {
+        console.error("Session retrieval error:", error);
+        res.status(500).json({ error: "Failed to retrieve session" });
     }
 });
 
@@ -114,8 +157,10 @@ router.post("/webhook", async (req, res) => {
 
         if (orderId && !isNaN(orderId)) {
             try {
+                // 1. Mark Order as Paid
                 await storage.updateOrder(orderId, { status: "paid" });
 
+                // 2. Log Transaction
                 await storage.createTransaction({
                     orderId,
                     provider: "stripe",
@@ -124,6 +169,21 @@ router.post("/webhook", async (req, res) => {
                     amountCents: session.amount_total!,
                     rawResponse: session
                 });
+
+                // 3. Fulfill Credits if applicable
+                const order = await storage.getOrder(orderId);
+                const orderProduct = await storage.getProduct(session.metadata.productId);
+
+                if (order && order.userId && orderProduct && orderProduct.type === 'credits') {
+                    const user = await storage.getUser(order.userId);
+                    if (user) {
+                        const creditAmount = parseInt(session.metadata.creditAmount || '0') || 0;
+                        if (creditAmount > 0) {
+                            await storage.updateUserCredits(user.id, user.credits + creditAmount);
+                            console.log(`Added ${creditAmount} credits to user ${user.id}`);
+                        }
+                    }
+                }
 
                 console.log(`Order ${orderId} marked as paid.`);
                 // TODO: Send email
@@ -136,6 +196,80 @@ router.post("/webhook", async (req, res) => {
     }
 
     res.json({ received: true });
+});
+
+/**
+ * Get Credit Balance
+ */
+router.get("/credits", isAuthenticated, async (req, res) => {
+    try {
+        const userId = (req.user as any)?.id;
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+        const user = await storage.getUser(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.json({ credits: user.credits });
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+/**
+ * Spend Credits
+ * Used when user clicks "Export" or "Purchase" using balance
+ */
+router.post("/spend-credits", isAuthenticated, async (req, res) => {
+    try {
+        const userId = (req.user as any)?.id;
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+        const { amount, description } = req.body;
+        if (!amount || amount <= 0) return res.status(400).json({ error: "Invalid amount" });
+
+        const user = await storage.getUser(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        if (user.credits < amount) {
+            return res.status(402).json({ error: "Insufficient credits", currentBalance: user.credits });
+        }
+
+        // Deduct credits
+        const remaining = user.credits - amount;
+        await storage.updateUserCredits(userId, remaining);
+
+        // Record transaction (internal spend)
+        // We accept that 'order_id' is null for internal credit spends for now, or create a $0 order.
+        // For now, simpler is better.
+
+        console.log(`User ${userId} spent ${amount} credits on ${description}`);
+
+        res.json({ success: true, remainingCredits: remaining });
+
+    } catch (error) {
+        console.error("Spend Credits Error:", error);
+        res.status(500).json({ error: "Transaction failed" });
+    }
+});
+
+/**
+ * Claim Free Trial (Testing only)
+ */
+router.post("/trial", isAuthenticated, async (req, res) => {
+    try {
+        const userId = (req.user as any)?.id;
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+        const user = await storage.getUser(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // Add 50 credits
+        await storage.updateUserCredits(userId, (user.credits || 0) + 50);
+
+        res.json({ success: true, message: "Trial credits added" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to add trial credits" });
+    }
 });
 
 export function registerPaymentRoutes(app: express.Express) {

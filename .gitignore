@@ -34,3 +34,13 @@ yarn-error.log*
 /migrations
 /node_modules
 tsbuildinfo
+
+# Test Artifacts
+cookies*.txt
+server/stress_setup.ts
+server/promote.ts
+test-payments.sh
+
+# Local Assets
+public/uploads/*
+!public/uploads/.gitkeep

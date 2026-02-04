@@ -20,7 +20,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      setLocation("/api/login");
+      setLocation("/api/auth/google");
     }
   }, [user, isLoading, setLocation]);
 
@@ -79,10 +79,10 @@ export default function Dashboard() {
                   )}
                 />
                 <div className="p-8 border-2 border-dashed border-white/10 rounded-xl text-center hover:border-primary/50 transition-colors cursor-pointer bg-background/50">
-                  <p className="text-sm text-muted-foreground">Drag & drop source images here<br/>(Demo Mode: Auto-fills URL)</p>
+                  <p className="text-sm text-muted-foreground">Drag & drop source images here<br />(Demo Mode: Auto-fills URL)</p>
                 </div>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={createUpload.isPending}
                   className="w-full bg-primary text-background font-bold"
                 >
@@ -115,9 +115,8 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        upload.status === 'completed' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'
-                      }`}>
+                      <span className={`text-xs px-2 py-1 rounded-full ${upload.status === 'completed' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'
+                        }`}>
                         {upload.status}
                       </span>
                       <Button size="sm" variant="ghost" className="text-primary hover:text-primary/80">View</Button>

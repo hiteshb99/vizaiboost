@@ -7,7 +7,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 // Initialize Stripe with the API key
 // We default to a placeholder to allow the app to start even if the key is missing (for build/test)
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
-    apiVersion: '2025-01-27.acacia', // Locking to a recent stable version
+    apiVersion: '2023-08-16', // Locking to a recent stable version
     typescript: true,
 });
 

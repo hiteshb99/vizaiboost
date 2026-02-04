@@ -61,6 +61,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  log(`Environment: ${process.env.NODE_ENV || "development"}`);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -95,7 +96,6 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
     },
     () => {
       log(`serving on port ${port}`);

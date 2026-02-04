@@ -72,9 +72,19 @@ export function BrandingIntakeModal({ isOpen, onClose, onProceedToCheckout }: Br
         <Dialog open={isOpen} onOpenChange={(open) => !open && reset()}>
             <DialogContent className="sm:max-w-lg bg-card border-white/10 text-white max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Professional Branding Service</DialogTitle>
-                    <DialogDescription className="text-muted-foreground">
-                        {step === 1 ? "Tell us about your brand." : "Upload your assets."}
+                    <DialogTitle className="text-2xl font-black uppercase tracking-tighter">Brand Studio Polish <span className="text-primary text-base font-bold normal-case tracking-normal ml-2">(Human-Finished)</span></DialogTitle>
+                    <DialogDescription className="text-muted-foreground pt-4">
+                        <div className="space-y-4">
+                            <p className="font-bold text-white">Final commercial refinement by a professional designer.</p>
+                            <ul className="space-y-1 text-sm text-white/70">
+                                <li className="flex items-start gap-2">Background cleanup & branding integration</li>
+                                <li className="flex items-start gap-2">Precise logo placement & optical alignment</li>
+                                <li className="flex items-start gap-2">Human quality control (eliminating artifacts)</li>
+                            </ul>
+                            <div className="flex items-center gap-4 text-xs font-bold text-white/50 pt-2 border-t border-white/10">
+                                <span>⏱ Delivery: 24–48 hours</span>
+                            </div>
+                        </div>
                     </DialogDescription>
                 </DialogHeader>
 
@@ -89,8 +99,34 @@ export function BrandingIntakeModal({ isOpen, onClose, onProceedToCheckout }: Br
                                     value={formData.brandName}
                                     onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
                                     className="bg-background/50 border-white/10"
+                                    maxLength={100}
                                 />
                             </div>
+
+                            <div className="space-y-3">
+                                <Label>Frame Aesthetics</Label>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {[
+                                        { id: 'white', name: 'Gallery White', desc: 'Clean museum-style white frame with balanced padding' },
+                                        { id: 'black', name: 'Luxury Black', desc: 'High-contrast black frame for premium products' },
+                                        { id: 'oak', name: 'Modern Oak', desc: 'Warm wood tone for lifestyle brands' },
+                                        { id: 'deco', name: 'Obsidian Deco', desc: 'Editorial dark frame with luxury accents' }
+                                    ].map((frame) => (
+                                        <div
+                                            key={frame.id}
+                                            onClick={() => setFormData({ ...formData, instructions: frame.name + " Frame. " + formData.instructions })}
+                                            className="cursor-pointer border border-white/10 rounded-xl p-3 hover:bg-white/5 transition-all flex items-center justify-between group"
+                                        >
+                                            <div>
+                                                <p className="font-bold text-sm text-white">{frame.name}</p>
+                                                <p className="text-xs text-white/50">{frame.desc}</p>
+                                            </div>
+                                            <div className="w-4 h-4 rounded-full border border-white/30 group-hover:border-primary"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="instructions">Instructions / Notes</Label>
                                 <Textarea
@@ -98,30 +134,30 @@ export function BrandingIntakeModal({ isOpen, onClose, onProceedToCheckout }: Br
                                     placeholder="Describe your style (e.g. 'Minimalist, Use hex code #FF5733 for borders')"
                                     value={formData.instructions}
                                     onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                                    className="bg-background/50 border-white/10 min-h-[100px]"
+                                    className="bg-background/50 border-white/10 min-h-[80px]"
+                                    maxLength={400}
                                 />
                             </div>
                         </>
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-6">
-                            {/* Logo Upload */}
-                            <div className="space-y-2">
-                                <Label>Brand Logo (Transparent PNG preferred)</Label>
+                        <>
+                            <div className="space-y-4">
+                                <Label>Upload Brand Assets</Label>
                                 <div className="flex items-center gap-4">
                                     <Button
                                         variant="outline"
-                                        className="w-full h-24 border-dashed border-white/20 hover:border-primary/50 flex flex-col gap-2"
+                                        className="w-full h-32 border-dashed border-white/20 hover:border-primary/50 flex flex-col gap-2"
                                         onClick={() => logoInputRef.current?.click()}
                                         disabled={loading}
                                     >
                                         {formData.logoUrl ? (
-                                            <span className="text-green-500 font-bold flex items-center"><CheckIcon className="w-4 h-4 mr-2" /> Logo Uploaded</span>
+                                            <span className="text-green-500 font-bold flex items-center"><CheckIcon className="w-5 h-5 mr-2" /> Logo Uploaded</span>
                                         ) : (
                                             <>
-                                                <Upload className="w-6 h-6 text-muted-foreground" />
-                                                <span className="text-xs text-muted-foreground">Click to upload logo</span>
+                                                <Upload className="w-8 h-8 text-muted-foreground" />
+                                                <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Upload PNG Logo</span>
                                             </>
                                         )}
                                     </Button>
@@ -135,8 +171,7 @@ export function BrandingIntakeModal({ isOpen, onClose, onProceedToCheckout }: Br
                                 </div>
                             </div>
 
-                            {/* Reference Upload with Camera Support */}
-                            <div className="space-y-2">
+                            <div className="space-y-2 pt-4 border-t border-white/5">
                                 <Label>Reference Photo (Optional)</Label>
                                 <div className="flex items-center gap-4">
                                     <Button
@@ -162,12 +197,12 @@ export function BrandingIntakeModal({ isOpen, onClose, onProceedToCheckout }: Br
                                         ref={refInputRef}
                                         className="hidden"
                                         accept="image/*"
-                                        capture="environment" /* Enables camera on mobile */
+                                        capture="environment"
                                         onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'referenceUrl')}
                                     />
                                 </div>
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
 
@@ -175,7 +210,7 @@ export function BrandingIntakeModal({ isOpen, onClose, onProceedToCheckout }: Br
                     {step === 2 ? (
                         <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
                     ) : (
-                        <div /> /* Spacer */
+                        <div />
                     )}
 
                     {step === 1 ? (
@@ -184,9 +219,9 @@ export function BrandingIntakeModal({ isOpen, onClose, onProceedToCheckout }: Br
                         <Button
                             onClick={handleSubmit}
                             className="w-full sm:w-auto bg-primary text-primary-foreground font-bold"
-                            disabled={loading}
+                            disabled={loading || !formData.logoUrl}
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Proceed to Payment"}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Book Studio Slot ($99)"}
                         </Button>
                     )}
                 </DialogFooter>

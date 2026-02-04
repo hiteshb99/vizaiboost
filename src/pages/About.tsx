@@ -7,15 +7,15 @@ export default function About() {
   return (
     <PageTransition>
       <Helmet>
-        <title>About Us | VizAI Boost</title>
-        <meta name="description" content="Learn about the team behind VizAI Boost and our mission to revolutionize e-commerce content production." />
+        <title>About Us | VizAI</title>
+        <meta name="description" content="Learn about the team behind VizAI and our mission to revolutionize e-commerce content production." />
       </Helmet>
       <div className="container mx-auto px-4 md:px-6">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h1 className="text-5xl md:text-6xl font-heading font-bold text-white mb-6">Our Story</h1>
           <p className="text-xl text-muted-foreground">
-            Founded in 2026, VizAI Boost was born from a simple idea: E-commerce moves fast, and visual content should too. We combine cutting-edge generative AI with human artistry.
+            Founded in 2026, VizAI was born from a simple idea: E-commerce moves fast, and visual content should too. We combine cutting-edge generative AI with human artistry.
           </p>
         </div>
 
@@ -47,9 +47,9 @@ export default function About() {
         {/* Story Content */}
         <div className="grid lg:grid-cols-2 gap-16 items-center mb-24">
           <div>
-            <img 
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop" 
-              alt="Team collaboration" 
+            <img
+              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop"
+              alt="Team collaboration"
               className="rounded-2xl shadow-2xl border border-white/10 grayscale hover:grayscale-0 transition-all duration-500"
             />
           </div>

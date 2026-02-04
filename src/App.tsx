@@ -6,8 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { CookieBanner } from "@/components/CookieBanner";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 // Pages
+import AuthPage from "@/pages/Auth";
 import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Services from "@/pages/Services";
@@ -17,12 +19,15 @@ import Blog from "@/pages/Blog";
 import Contact from "@/pages/Contact";
 import Dashboard from "@/pages/Dashboard";
 import Checkout from "@/pages/Checkout";
+import AgencyDashboard from "@/pages/AgencyDashboard";
+import AdminPage from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/auth" component={AuthPage} />
       <Route path="/about" component={About} />
       <Route path="/services" component={Services} />
       <Route path="/pricing" component={Pricing} />
@@ -32,6 +37,11 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/checkout/result" component={Checkout} />
       <Route path="/checkout/cancel" component={Checkout} />
+      <Route path="/agency" component={AgencyDashboard} />
+      <Route path="/admin" component={AdminPage} />
+      <Route path="/login">
+        <AuthPage />
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -41,6 +51,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <ScrollToTop />
         <div className="min-h-screen bg-background flex flex-col font-sans text-foreground selection:bg-primary/30">
           <Navigation />
           <main className="flex-grow relative z-10">

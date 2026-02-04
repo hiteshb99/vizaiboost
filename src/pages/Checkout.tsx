@@ -8,6 +8,7 @@ export default function Checkout() {
     const [location] = useLocation();
     const [status, setStatus] = useState<'loading' | 'success' | 'canceled'>('loading');
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const [orderData, setOrderData] = useState<any>(null);
 
     useEffect(() => {
         // Parse query params manually since wouter doesn't have a built-in hook for it
@@ -18,7 +19,16 @@ export default function Checkout() {
         if (session) {
             setSessionId(session);
             setStatus('success');
-            // In a real app, you might want to verify this session with the backend
+
+            // Fetch order details from backend
+            fetch(`/api/payment/session/${session}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.order) {
+                        setOrderData(data.order);
+                    }
+                })
+                .catch(err => console.error('Failed to fetch order:', err));
         } else {
             // Check if it's the cancel route or just empty
             if (window.location.pathname.includes('cancel')) {
@@ -51,12 +61,21 @@ export default function Checkout() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {status === 'success' && (
-                        <div className="grid gap-2">
-                            <Link href="/dashboard">
-                                <Button className="w-full font-bold">Go to Dashboard</Button>
-                            </Link>
+                        <div className="grid gap-3">
+                            {orderData?.metadata?.imageUrl && (
+                                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                                    <p className="text-xs font-bold text-white/60 uppercase tracking-widest mb-2">Your Purchase</p>
+                                    <img src={orderData.metadata.imageUrl} alt="Purchased image" className="w-full rounded-lg mb-3" />
+                                    <Button
+                                        onClick={() => window.open(orderData.metadata.imageUrl, '_blank')}
+                                        className="w-full bg-primary text-black font-black"
+                                    >
+                                        DOWNLOAD HIGH-RES IMAGE
+                                    </Button>
+                                </div>
+                            )}
                             <Link href="/">
-                                <Button variant="outline" className="w-full">Back to Home</Button>
+                                <Button variant="outline" className="w-full">Generate Another</Button>
                             </Link>
                         </div>
                     )}

@@ -143,7 +143,15 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // If not on Replit, bypass auth for now
   if (!process.env.REPL_ID) {
-    (req as any).user = { claims: { sub: "dev-user" } };
+    const devUserClaims = {
+      sub: "dev-user",
+      email: "dev@example.com",
+      first_name: "Dev",
+      last_name: "User",
+      profile_image_url: ""
+    };
+    await upsertUser(devUserClaims);
+    (req as any).user = { claims: devUserClaims };
     return next();
   }
 
